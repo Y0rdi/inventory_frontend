@@ -1,0 +1,123 @@
+/* src/styles/UserManagement.css */
+
+.user-management-container {
+    padding: 20px;
+}
+
+.user-management-board {
+    background-color: #fff; /* White background for the board */
+    padding: 20px; /* Padding inside the board */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for the board */
+}
+
+.add-user-btn {
+    background-color: #4caf50; /* Green button */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+.add-user-btn:hover {
+    background-color: #45a049;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+.user-table th,
+.user-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center; /* Center alignment for better readability */
+}
+
+.user-table th {
+    background-color: #f2f2f2; /* Light gray background for headers */
+    font-weight: bold;
+}
+
+.user-table tr:nth-child(even) {
+    background-color: #f9f9f9; /* Alternate row colors */
+}
+
+.user-table tr:hover {
+    background-color: #f1f1f1; /* Hover effect for rows */
+}
+
+.modal-overlay {
+    display: flex;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4); /* Dark overlay */
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fff; /* White background for the modal */
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 300px;
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+}
+
+.modal-content h3 {
+    margin-top: 0; /* Remove default margin */
+    color: #333; /* Dark text for better contrast */
+}
+
+.modal-content form label {
+    display: block;
+    margin-bottom: 10px; /* Space between label and input */
+}
+
+.modal-content form input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    margin-bottom: 15px; /* Space below inputs */
+    border-radius: 4px; /* Rounded input corners */
+    border: 1px solid #ccc; /* Light border */
+}
+
+.modal-content button[type="submit"] {
+    background-color: #4caf50; /* Green for submit button */
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%; /* Full width button */
+}
+
+.modal-content button[type="submit"]:hover {
+    background-color: #45a049; /* Darker green on hover */
+}
+
+.modal-content button[type="button"] {
+    background-color: #d9534f; /* Red for cancel button */
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%; /* Full width button */
+    margin-top: 10px; /* Space above cancel button */
+}
+
+.modal-content button[type="button"]:hover {
+    background-color: #c9302c; /* Darker red on hover */
+}

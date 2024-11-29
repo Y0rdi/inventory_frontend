@@ -1,0 +1,107 @@
+/* src/styles/ProcurementOfficer.css */
+.ant-layout-sider {
+    background-color: #4CAF50 !important; /* Sidebar background color */
+    color: black;
+  }
+  
+  /* Active menu item color */
+  .ant-menu-dark .ant-menu-item-selected {
+    background-color: rgba(255, 255, 0, 0.3) !important; /* Light yellow background for selected item */
+    color: #fff; /* Change text color to white for better contrast */
+  }
+  
+  /* Optional: Hovered menu item color */
+  .ant-menu-dark .ant-menu-item:hover {
+    background-color: rgba(0, 255, 13, 0.1) !important; /* Hovered item color */
+  }
+  
+  /* Change text color for active links */
+  .ant-menu-dark .ant-menu-item-selected a {
+    color: black !important; /* Text color for the active link */
+  }
+  
+.procuremt-officer-tab {
+    background-color: #4CAF50 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    top: 0rem;
+    padding-top: 3rem;
+    gap: 1rem;
+    border: 2px solid rgb(2, 70, 25);
+   
+    
+    
+}
+.ant-layout-sider-children {
+  background-color: #4CAF50;
+
+ 
+}
+
+.ant-menu-title-content {
+  color: black !important;
+
+  
+}
+.ant-menu-title-content a{
+  color: black !important;
+  font-size: 0.9rem;
+}
+.Header{
+  padding-bottom: '20px' !important;
+  display: flex;
+  /* justify-content: center; */
+  align-items: center;
+  border-bottom: 2px solid rgb(2, 70, 25);
+}
+
+/* li.ant-menu-item{
+  gap: 1;
+} */
+
+.ant-menu {
+  background-color: #4CAF50;
+  padding-top: 3rem;
+
+}
+.warehouse-header{
+  background-color: #4CAF50;
+}
+/* Style the container to have some padding */
+.log-incoming-items-container {
+  padding-top: 100px;
+}
+
+/* Style the Button */
+.log-incoming-button {
+  margin-bottom: 20px;
+}
+
+/* Style for the table */
+.log-incoming-table {
+  margin-top: 20px;
+}
+
+/* Optional: Style the modal if you want to adjust the width or other properties */
+.ant-modal {
+  max-width: 600px;
+  margin: auto;
+}
+
+/* Optional: Adjust the modal title */
+.ant-modal-title {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Optional: Change the background color of the button */
+.ant-btn-primary {
+  background-color: #4CAF50;
+  border-color: #4CAF50;
+}
+
+.ant-btn-primary:hover {
+  background-color: #45a049;
+  border-color: #45a049;
+}
