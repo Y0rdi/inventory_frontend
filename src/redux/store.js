@@ -1,11 +1,15 @@
 import { configureStore } from '@reduxjs/toolkit';
 import userReducer from '../redux/slices/userSlice';  // Import the userSlice
 import authReducer from '../redux/slices/authSlice';  // Import the authSlice
+import supplierReducer from '../redux/slices/supplierSlice';  // Import the supplierSlice
+import requestedItemsReducer from '../redux/slices/requestedItemsSlice';  // Import the requestedItemsSlice
 
 const store = configureStore({
   reducer: {
-    user: userReducer, // Handle user data
-    auth: authReducer, // Handle authentication state
+    user: userReducer, // Handles user data
+    auth: authReducer, // Handles authentication state
+    supplier: supplierReducer, // Handles supplier communication state
+    requestedItems: requestedItemsReducer, // Handles requested items state
   },
 });
 

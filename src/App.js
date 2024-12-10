@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';  // Import from Redux to access the auth state
+import { useSelector } from 'react-redux';  
 import Admin from './components/Admin/Admin';
 import ProcurementOfficer from './components/procurementOfficer/ProcurementOfficer';
 import QualityInspectorLayout from './components/QualityControlInspector/QualityControlInspectorLayout';
