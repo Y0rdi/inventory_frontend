@@ -11,7 +11,7 @@ const { Option } = Select;
 
 const AdminUserManagement = () => {
   const dispatch = useDispatch();
-  const { users, status, error } = useSelector((state) => state.users);
+  const { users, status, error } = useSelector((state) => state.user);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -36,6 +36,7 @@ const AdminUserManagement = () => {
       }
       resetForm();
     } catch (err) {
+      console.error('Error during submit:', err); 
       message.error('Failed to save user');
     }
   };
@@ -56,7 +57,7 @@ const AdminUserManagement = () => {
   // Function to handle remove button click for a specific user
   const handleRemoveClick = async (userId) => {
     try {
-      await dispatch(deleteUser(userId)).unwrap();
+      await dispatch(deleteUser(Number(userId))).unwrap();
       message.info('User removed successfully');
     } catch (err) {
       message.error('Failed to remove user');

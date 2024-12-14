@@ -1,27 +1,38 @@
-// src/components/procurementOfficer/ProcurementOfficerLayout.js
 import React, { useState } from 'react';
-import { Layout, Menu, Breadcrumb } from 'antd';
-import {
-  PieChartOutlined,
-  BellOutlined,
-  FileOutlined,
-} from '@ant-design/icons';
-import { Link } from 'react-router-dom';
-// Ensure you have header styles
-import '../../styles/ProcurementOfficer/ProcurementOfficer.css'; // Your procurement officer styles
+import { Layout, Menu, Breadcrumb, Avatar, Dropdown } from 'antd';
+import { UserOutlined } from '@ant-design/icons'; // Import UserOutlined
+import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+import '../../styles/ProcurementOfficer/ProcurementOfficer.css';
 
 const { Header, Content, Footer, Sider } = Layout;
 
 const ProcurementOfficerLayout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const colorBgContainer = "#4CAF50"; // Same color as admin layout
+  const navigate = useNavigate(); // Initialize useNavigate
+  const colorBgContainer = "#4CAF50";
 
   const menuItems = [
-    { key: '1', label: <Link to="/procurement-officer/">Requested Items</Link>, icon: <PieChartOutlined /> },
-    { key: '2', label: <Link to="/procurement-officer/notifications">Notifications</Link>, icon: <BellOutlined /> },
-    { key: '3', label: <Link to="/procurement-officer/supplier-communication">Supplier Communication</Link>, icon: <FileOutlined /> },
-    { key: '4', label: <Link to="/procurement-officer/generate-report">Generate Report</Link>, icon: <FileOutlined /> },
+    { key: '1', label: <Link to="/procurement-officer/">Requested Items</Link> },
+    { key: '2', label: <Link to="/procurement-officer/notifications">Notifications</Link> },
+    { key: '3', label: <Link to="/procurement-officer/supplier-communication">Supplier Communication</Link> },
+    { key: '4', label: <Link to="/procurement-officer/generate-report">Generate Report</Link> },
   ];
+
+  // User menu for logout
+  const userMenu = (
+    <Menu>
+      <Menu.Item
+        key="logout"
+        onClick={() => {
+          // Remove the token and redirect to login
+          localStorage.removeItem('Token');
+          navigate('/login'); // Redirect to login page
+        }}
+      >
+        Logout
+      </Menu.Item>
+    </Menu>
+  );
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -39,8 +50,26 @@ const ProcurementOfficerLayout = ({ children }) => {
           padding: '0 20px',
         }}
       >
-        <h2 style={{ margin: 0 }}>Procurement Officer</h2>
-        <span style={{ fontSize: '24px', cursor: 'pointer' }}>🔔</span>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <h2 style={{ margin: 0 }}>Procurement Officer</h2>
+        </div>
+
+        {/* Avatar on the right side with white background and circular border */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Dropdown overlay={userMenu} trigger={['click']}>
+            <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+              <Avatar
+                size={40}
+                icon={<UserOutlined />}
+                style={{
+                  backgroundColor: 'white', // White background
+                  border: '2px solid #4CAF50', // Green border for the circular effect
+                  color: '#4CAF50', // Green icon color
+                }}
+              />
+            </div>
+          </Dropdown>
+        </div>
       </Header>
 
       <Layout style={{ marginTop: 64 }}>
@@ -59,9 +88,7 @@ const ProcurementOfficerLayout = ({ children }) => {
 
         <Layout>
           <Content style={{ margin: '16px' }}>
-            <Breadcrumb style={{ margin: '16px 0' }}>
-              {/* You can add breadcrumb items here if needed */}
-            </Breadcrumb>
+            <Breadcrumb style={{ margin: '16px 0' }} />
             <div style={{ padding: 24, minHeight: 360 }}>
               {children}
             </div>

@@ -1,111 +1,76 @@
-// src/components/procurementOfficer/RequestedItems.js
-import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Input, Spin } from 'antd';
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchRequestedItems, approveItem, declineItem } from '../../redux/slices/requestedItemsSlice';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchRequestedItems, approveRequest, declineRequest } from '../../redux/slices/requestedItemsSlice'; // Import the thunks
+import { Card, Spin, List, Button, message } from 'antd'; // Add Button and message for success/error alerts
 
-const RequestedItems = () => {
-    const dispatch = useDispatch();
-    const { items, loading } = useSelector((state) => state.requestedItems);
+const RequestedItemsList = () => {
+  const dispatch = useDispatch();
+  const { items, loading, error } = useSelector((state) => state.requestedItems);
 
-    const [selectedItem, setSelectedItem] = useState(null);
-    const [actionType, setActionType] = useState(null);
-    const [supplier, setSupplier] = useState('');
-    const [supplierDetails, setSupplierDetails] = useState('');
+  useEffect(() => {
+    dispatch(fetchRequestedItems()); // Dispatch the action to fetch requested items
+  }, [dispatch]);
 
-    // Fetch requested items on component mount
-    useEffect(() => {
-        dispatch(fetchRequestedItems());
-    }, [dispatch]);
+  const handleApprove = (itemId) => {
+    dispatch(approveRequest(itemId))
+      .then(() => {
+        message.success('Request approved successfully!');
+      })
+      .catch((err) => {
+        message.error(`Error: ${err.message}`);
+      });
+  };
 
-    const handleActionClick = (item, type) => {
-        setSelectedItem(item);
-        setActionType(type);
-    };
+  const handleDecline = (itemId) => {
+    dispatch(declineRequest(itemId))
+      .then(() => {
+        message.success('Request declined successfully!');
+      })
+      .catch((err) => {
+        message.error(`Error: ${err.message}`);
+      });
+  };
 
-    const handleConfirmAction = () => {
-        if (actionType === 'Approve') {
-            dispatch(approveItem({ id: selectedItem.id, supplier, supplierDetails }));
-        } else if (actionType === 'Decline') {
-            dispatch(declineItem(selectedItem.id));
-        }
-        resetModal();
-    };
+  if (loading) {
+    return <Spin tip="Loading items..." />;
+  }
 
-    const resetModal = () => {
-        setSelectedItem(null);
-        setActionType(null);
-        setSupplier('');
-        setSupplierDetails('');
-    };
+  if (error) {
+    return <p>Error: {error}</p>;
+  }
 
-    const columns = [
-        { title: 'Item Name', dataIndex: 'name', key: 'name' },
-        { title: 'Quantity', dataIndex: 'quantity', key: 'quantity' },
-        { title: 'Requested By', dataIndex: 'requestedBy', key: 'requestedBy' },
-        { title: 'Date', dataIndex: 'date', key: 'date' },
-        {
-            title: 'Action',
-            key: 'action',
-            render: (text, item) => (
-                <>
-                    <Button
-                        type="primary"
-                        onClick={() => handleActionClick(item, 'Approve')}
-                    >
-                        Approve
-                    </Button>
-                    <Button
-                        type="danger"
-                        onClick={() => handleActionClick(item, 'Decline')}
-                        style={{ marginLeft: '8px' }}
-                    >
-                        Decline
-                    </Button>
-                </>
-            ),
-        },
-    ];
-
-    return (
-        <div>
-            <h2 style={{ color: '#4caf50' }}>Requested Items</h2>
-            {loading ? (
-                <Spin tip="Loading items..." />
-            ) : (
-                <Table
-                    dataSource={items}
-                    columns={columns}
-                    rowKey="id"
-                    pagination={false}
-                />
-            )}
-
-            <Modal
-                title={`${actionType} ${selectedItem ? selectedItem.name : ''}`}
-                visible={!!selectedItem}
-                onOk={handleConfirmAction}
-                onCancel={resetModal}
-            >
-                {actionType === 'Approve' && (
-                    <div>
-                        <label>Supplier:</label>
-                        <Input
-                            value={supplier}
-                            onChange={(e) => setSupplier(e.target.value)}
-                            placeholder="Enter Supplier Name"
-                        />
-                        <label style={{ marginTop: '10px' }}>Supplier Details:</label>
-                        <Input.TextArea
-                            value={supplierDetails}
-                            onChange={(e) => setSupplierDetails(e.target.value)}
-                            placeholder="Enter details to send to the supplier"
-                        />
-                    </div>
-                )}
-            </Modal>
-        </div>
-    );
+  return (
+    <div>
+      <h2>Requested Items</h2>
+      <List
+        dataSource={items}
+        renderItem={(item) => (
+          <List.Item key={item.id}>
+            <Card title={`Item: ${item.name}`}>
+              <p>Quantity: {item.quantity}</p>
+              <p>Requested By: {item.requestedBy}</p>
+              <p>Date: {item.date}</p>
+              <div>
+                <Button 
+                  type="primary" 
+                  onClick={() => handleApprove(item.id)} 
+                  style={{ marginRight: '10px' }}
+                >
+                  Accept
+                </Button>
+                <Button 
+                  type="danger" 
+                  onClick={() => handleDecline(item.id)}
+                >
+                  Decline
+                </Button>
+              </div>
+            </Card>
+          </List.Item>
+        )}
+      />
+    </div>
+  );
 };
 
-export default RequestedItems;
+export default RequestedItemsList;

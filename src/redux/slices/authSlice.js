@@ -1,64 +1,74 @@
-// src/redux/slices/authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-const BASE_URL = 'https://192.168.19.73';
 
+// API endpoint
+const BASE_URL = 'http://localhost:4000/api';
 
+// Async action to handle login
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async ({ username, password }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${BASE_URL}/admin/login`, { username, password });
-      return response.data; 
+      const response = await axios.post(`${BASE_URL}/login`, { username, password });
+      const { token, user } = response.data;
+
+      // Store token in local storage
+      localStorage.setItem('token', token);
+
+      // Check if the username and password are the same (as per your requirements)
+      if (user.username === username && user.password === password) {
+        // Return data with needsPasswordUpdate flag
+        return { token, user, needsPasswordUpdate: true };
+      }
+
+      // Return data without the needsPasswordUpdate flag if login is normal
+      return { token, user, needsPasswordUpdate: false };
     } catch (error) {
-      return rejectWithValue(error.response.data.message);
+      console.error('Login error:', error.response);
+      return rejectWithValue(error.response?.data?.message || 'Something went wrong');
     }
   }
 );
 
-// Create slice for auth state
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
-    // Load user and token from localStorage if available
-    user: JSON.parse(localStorage.getItem('user')) || null,
-    token: localStorage.getItem('token') || null,
-    loading: false,
+    user: null,
+    isAuthenticated: false,
     error: null,
+    needsPasswordUpdate: false, // New field to store if password update is needed
   },
   reducers: {
-    logout: (state) => {
-      state.user = null;
-      state.token = null;
-      localStorage.removeItem('user'); 
-      localStorage.removeItem('token'); 
-    },
     setUser: (state, action) => {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
-      localStorage.setItem('user', JSON.stringify(action.payload.user)); 
-      localStorage.setItem('token', action.payload.token); 
+      const { user } = action.payload;
+      state.user = user;
+      state.isAuthenticated = true;
     },
+    logoutUser: (state) => {
+      state.user = null;
+      state.isAuthenticated = false;
+      state.needsPasswordUpdate = false; // Reset this when logging out
+      localStorage.removeItem('token'); // Remove token from local storage on logout
+    },
+    setNeedsPasswordUpdate: (state, action) => {
+      state.needsPasswordUpdate = action.payload;
+    }
   },
   extraReducers: (builder) => {
     builder
-      .addCase(loginUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-        localStorage.setItem('user', JSON.stringify(action.payload.user)); 
-        localStorage.setItem('token', action.payload.token); 
+        const { user, needsPasswordUpdate } = action.payload;
+        state.user = user;
+        state.isAuthenticated = true;
+        state.needsPasswordUpdate = needsPasswordUpdate; // Store the flag
       })
       .addCase(loginUser.rejected, (state, action) => {
-        state.loading = false;
         state.error = action.payload;
+        state.isAuthenticated = false;
       });
-  },
+  }
 });
 
-export const { logout, setUser } = authSlice.actions;
+export const { setUser, logoutUser, setNeedsPasswordUpdate } = authSlice.actions;
+
 export default authSlice.reducer;
