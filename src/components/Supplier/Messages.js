@@ -1,19 +1,13 @@
-// src/components/SupplierCommunication.js
+// src/components/MessageCommunication.js
 import React, { useState } from 'react';
-import { Tabs, Form, Input, Button, Select, Typography, message } from 'antd';
+import { Tabs, Form, Input, Button, Typography, message } from 'antd';
 import { SendOutlined } from '@ant-design/icons';
 import '../../styles/SupplierCommunication.css';
 
 const { TabPane } = Tabs;
-const { Option } = Select;
 const { Title } = Typography;
 
-const suppliers = [
-  { id: 1, name: 'Abebe Melaku' },
-  { id: 2, name: 'Selam Ayalew' }
-];
-
-const SupplierCommunication = () => {
+const MessageCommunication = () => {
   const [activeTab, setActiveTab] = useState('leaveMessage');
   const [form] = Form.useForm();
 
@@ -27,8 +21,8 @@ const SupplierCommunication = () => {
   };
 
   return (
-    <div className="supplier-communication">
-      <Title level={2} style={{ color: '#4caf50' }}>Supplier Communication</Title>
+    <div className="message-communication">
+      <Title level={2} style={{ color: '#4caf50' }}>Messages</Title>
       
       <Tabs activeKey={activeTab} onChange={handleTabChange} centered>
         <TabPane tab="Leave Message" key="leaveMessage">
@@ -39,16 +33,6 @@ const SupplierCommunication = () => {
               layout="vertical"
               className="message-form"
             >
-              <Form.Item label="Choose Supplier" name="supplier" rules={[{ required: true, message: 'Please select a supplier!' }]}>
-                <Select placeholder="Select a supplier" style={{ width: '100%' }}>
-                  {suppliers.map(supplier => (
-                    <Option key={supplier.id} value={supplier.name}>
-                      {supplier.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
               <Form.Item label="Message" name="message" rules={[{ required: true, message: 'Please enter your message!' }]}>
                 <Input.TextArea rows={4} placeholder="Write your message here..." />
               </Form.Item>
@@ -72,4 +56,4 @@ const SupplierCommunication = () => {
   );
 };
 
-export default SupplierCommunication;
+export default MessageCommunication;

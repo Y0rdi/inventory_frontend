@@ -1,73 +1,101 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import {jwtDecode} from 'jwt-decode'; // Correct import
-import { updatePassword, resetPasswordState } from '../redux/slices/passwordSlice';
-import { message } from 'antd';
-import '../styles/login.css';
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { updatePassword, resetMessages } from "../redux/slices/updatePasswordSlice";
+import { useNavigate } from "react-router-dom";
+import {jwtDecode} from "jwt-decode"; // Import JWT decoder
+import '../styles/updatepassword.css'; // Import your updated styles
 
-const UpdatePasswordPage = () => {
-  const [newPassword, setNewPassword] = useState('');
-  const { loading, success, error } = useSelector((state) => state.password);
+const UpdatePassword = () => {
+  const [formData, setFormData] = useState({
+    newpassword: "",
+  });
+
   const dispatch = useDispatch();
+  const { loading, successMessage, errorMessage } = useSelector(
+    (state) => state.updatePassword || {}
+  );
+
   const navigate = useNavigate();
 
-  let userID; // Declare userID
-
-  // Retrieve and decode the token
-  const token = localStorage.getItem('token'); // Get the token from localStorage
+  // Extract userID from the token
+  const token = localStorage.getItem("token");
+  let userID = null;
   if (token) {
     try {
-      const decoded = jwtDecode(token); // Correct usage of jwtDecode
-      userID = decoded?.userID; // Use userID instead of userId as returned by the API
-    } catch (err) {
-      console.error('Error decoding token:', err);
-      message.error('Invalid token. Please log in again.');
+      const decodedToken = jwtDecode(token); // Decode the token to get user info
+      userID = decodedToken.userID; // Assuming the token contains userID
+    } catch (error) {
+      console.error("Failed to decode token:", error);
     }
   }
 
-  useEffect(() => {
-    if (success) {
-      message.success('Password updated successfully');
-      dispatch(resetPasswordState());
-      navigate('/login');
-    }
-    if (error) {
-      message.error(error);
-    }
-  }, [success, error, dispatch, navigate]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (!userID) {
-      message.error('User ID not found. Please log in again.');
-      return;
-    }
-
-    dispatch(updatePassword({ userID, newPassword }));
+  // Handle input changes
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
+  // Handle form submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const { newpassword } = formData;
+    if (userID && newpassword) {
+      // Dispatch the updatePassword action with userID and newpassword
+      dispatch(updatePassword({ userID, newpassword })).then(() => {
+        // After success, clear the token and redirect to login
+        localStorage.removeItem("token"); // Remove the token
+        navigate("/login"); // Redirect to login
+      });
+    }
+  };
+
+  // Reset success or error message
+  const handleReset = () => {
+    dispatch(resetMessages());
+  };
+
+  useEffect(() => {
+    // If success message appears, reset messages after a delay
+    if (successMessage) {
+      setTimeout(() => {
+        dispatch(resetMessages());
+      }, 3000);
+    }
+  }, [successMessage, dispatch]);
+
   return (
-    <div className="login-container">
-      <div className="login-left">
+    <div className="update-password-container">
+      <div className="update-password-left">
         <img src={`${process.env.PUBLIC_URL}/bbz logo.png`} alt="BBZ" className="logo" />
         <img src={`${process.env.PUBLIC_URL}/proma logo.png`} alt="PROMACIDOR" className="logo" />
         <p>BBZ FOODS MANUFACTURING S.C</p>
       </div>
 
-      <div className="login-box">
-        <h2>Update Your Password</h2>
+      <div className="update-password-box">
+        <h2>Update Password</h2>
+        {successMessage && (
+          <p className="success-message">
+            {successMessage} <button onClick={handleReset}>Clear</button>
+          </p>
+        )}
+        {errorMessage && (
+          <p className="error-message">
+            {errorMessage} <button onClick={handleReset}>Clear</button>
+          </p>
+        )}
         <form onSubmit={handleSubmit}>
           <input
             type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="Enter new password"
+            name="newpassword"
+            placeholder="New Password"
+            value={formData.newpassword}
+            onChange={handleChange}
             required
           />
           <button type="submit" disabled={loading}>
-            {loading ? 'Updating...' : 'Update Password'}
+            {loading ? "Submitting..." : "Submit"}
           </button>
         </form>
       </div>
@@ -75,4 +103,4 @@ const UpdatePasswordPage = () => {
   );
 };
 
-export default UpdatePasswordPage;
+export default UpdatePassword;

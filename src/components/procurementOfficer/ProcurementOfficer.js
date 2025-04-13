@@ -5,7 +5,7 @@ import ProcurementOfficerLayout from './ProcurementOfficerLayout'; // Import you
 import RequestedItems from './RequestedItems';
 import Notifications from './Notifications';
 import SupplierCommunication from './SupplierCommunication';
-import GenerateReport from './ReportGeneration';
+import ConfirmedOrders from './ConfirmedOrders';
 
 const ProcurementOfficer = () => {
   return (
@@ -14,7 +14,7 @@ const ProcurementOfficer = () => {
         <Route path="/" element={<RequestedItems />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/supplier-communication" element={<SupplierCommunication />} />
-        <Route path="/generate-report" element={<GenerateReport />} />
+        <Route path="/confirmed-orders" element={<ConfirmedOrders />} />
       </Routes>
     </ProcurementOfficerLayout>
   );

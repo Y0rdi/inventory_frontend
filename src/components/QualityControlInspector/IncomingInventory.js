@@ -1,153 +1,142 @@
-import React, { useState } from 'react';
-import { Modal, Button, Checkbox, Radio, Divider } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchInspectionOrders, inspectOrder } from '../../redux/slices/inspectionOrdersSlice'; // Import the inspectOrder action
+import { Table, Spin, Alert, Button, Modal, Input } from 'antd';
 
-const IncomingInventory = () => {
-  // Manually define the sample item data
-  const item = {
-    itemName: 'Soya Bean',
-    date: '2024-11-01',
-    quantity: 100,
-    loggedBy: 'Alemu k.',
-    status: 'Pending',
+const InspectionOrdersList = () => {
+  const dispatch = useDispatch();
+
+  // Accessing the orders, loading, and error state from the Redux store
+  const { orders, loading, error } = useSelector((state) => state.inspectionOrders);
+
+  // Local state to manage modal visibility and selected order
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [inspectionNote, setInspectionNote] = useState('');
+  const [inspectionStatus, setInspectionStatus] = useState(null);
+
+  // Dispatching the action to fetch inspection orders when the component mounts
+  useEffect(() => {
+    dispatch(fetchInspectionOrders());
+  }, [dispatch]);
+
+  // Show loading state while data is being fetched
+  if (loading) return <Spin size="large" />;
+
+  // Show error message if there is an issue with the API request
+  if (error) {
+    return <Alert message="Error" description={error} type="error" showIcon />;
+  }
+
+  // Define the columns for the table (excluding the "Order ID" column)
+  const columns = [
+    {
+      title: 'Item Name',
+      dataIndex: 'itemDetails',  // Assuming `itemName` is available in the order data
+      key: 'itemDetails',
+    },
+    {
+      title: 'Quality Inspection Status',
+      dataIndex: 'qualityInspectionStatus',
+      key: 'qualityInspectionStatus',
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      render: (_, record) => (
+        <Button type="primary" onClick={() => handleInspect(record)}>
+          Inspect
+        </Button>
+      ),
+    },
+  ];
+
+  // Handle the "Inspect" button click
+  const handleInspect = (order) => {
+    setSelectedOrder(order);
+    setIsModalVisible(true); // Open the modal
+    setInspectionNote(''); // Reset note field
+    setInspectionStatus(null); // Reset inspection status
   };
 
-  const [checklistVisible, setChecklistVisible] = useState(false);
-  const [selectedCriteria, setSelectedCriteria] = useState([]);
-  const [inspectionResult, setInspectionResult] = useState('');
-
-  // Simulated checklists for different items
-  const getChecklist = (itemName) => {
-    if (itemName === 'Soya Bean') {
-      return [
-        'Check for moisture',
-        'Check packaging condition',
-        'Check expiry date',
-      ];
-    }
-    if (itemName === 'Film') {
-      return [
-        'Check for film quality',
-        'Check packaging integrity',
-      ];
-    }
-    if (itemName === 'Seasoning') {
-      return [
-        'Check for smell',
-        'Check packaging seal',
-      ];
-    }
-    return [];
+  // Handle modal close
+  const handleCancel = () => {
+    setIsModalVisible(false);
   };
 
-  const handleChecklistClick = () => {
-    setChecklistVisible(true);
+  // Handle approve or decline action
+  const handleApproval = (status) => {
+    if (!selectedOrder) return; // Ensure selectedOrder is not null
+
+    // Dispatch the inspectOrder action to update the order status
+    dispatch(inspectOrder({
+      orderID: selectedOrder.orderID,
+      status: status, // 'approved' or 'declined'
+      note: inspectionNote,
+    }));
+
+    setInspectionStatus(status);
+    setIsModalVisible(false); // Close the modal after action
   };
 
-  const handleChecklistCancel = () => {
-    setChecklistVisible(false);
-  };
+  // Define the modal content
+  const inspectionModal = (
+    <Modal
+      title="Inspection"
+      visible={isModalVisible}
+      onCancel={handleCancel}
+      footer={null}
+    >
+      <div>
+        <div style={{ marginTop: 16 }}>
+          <h3>Inspection Note:</h3>
+          <Input.TextArea
+            value={inspectionNote}
+            onChange={(e) => setInspectionNote(e.target.value)}
+            rows={4}
+            placeholder="Add your inspection notes here"
+          />
+        </div>
+        <div style={{ marginTop: 16 }}>
+          <Button
+            type="primary"
+            onClick={() => handleApproval('approved')}
+            style={{ marginRight: 8 }}
+          >
+            Approve
+          </Button>
+          <Button
+            type="danger"
+            onClick={() => handleApproval('declined')}
+          >
+            Decline
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
 
-  const handleCheckboxChange = (e) => {
-    const value = e.target.value;
-    setSelectedCriteria((prev) => {
-      if (prev.includes(value)) {
-        return prev.filter((item) => item !== value);
-      } else {
-        return [...prev, value];
-      }
-    });
-  };
-
-  const handleResultChange = (e) => {
-    setInspectionResult(e.target.value);
-  };
-
-  const handleSubmit = () => {
-    console.log('Checklist passed/failed:', inspectionResult);
-    console.log('Checked criteria:', selectedCriteria);
-    setChecklistVisible(false);
+  // Handle refresh button click to re-fetch the inspection orders
+  const handleRefresh = () => {
+    dispatch(fetchInspectionOrders());
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.itemDetails}>
-        <h3 style={styles.header}>Item Details</h3>
-        <p><strong>Item Name:</strong> {item.itemName}</p>
-        <p><strong>Date:</strong> {item.date}</p>
-        <p><strong>Quantity:</strong> {item.quantity}</p>
-        <p><strong>Logged By:</strong> {item.loggedBy}</p>
-        <p><strong>Status:</strong> {item.status}</p>
-
-        <Button
-          type="primary"
-          onClick={handleChecklistClick}
-          style={styles.button}
-        >
-          Fill Quality Checklist
-        </Button>
-      </div>
-
-      {/* Checklist Modal for Quality Control */}
-      <Modal
-        title={`Quality Control Checklist for ${item.itemName}`}
-        visible={checklistVisible}
-        onCancel={handleChecklistCancel}
-        footer={null}
-        width={600}
-      >
-        <div>
-          <h4>Quality Control Criteria:</h4>
-          <ul>
-            {getChecklist(item.itemName).map((check, index) => (
-              <li key={index}>
-                <Checkbox value={check} onChange={handleCheckboxChange}>{check}</Checkbox>
-              </li>
-            ))}
-          </ul>
-
-          <Divider />
-
-          <h4>Inspection Result:</h4>
-          <Radio.Group onChange={handleResultChange} value={inspectionResult}>
-            <Radio value="pass">Pass</Radio>
-            <Radio value="fail">Fail</Radio>
-          </Radio.Group>
-
-          <div style={{ marginTop: 16 }}>
-            <Button type="primary" onClick={handleSubmit}>Submit</Button>
-          </div>
-        </div>
-      </Modal>
+    <div>
+      <h1>Inspection Orders</h1>
+      <Button type="default" onClick={handleRefresh} style={{ marginBottom: 16 }}>
+        Refresh
+      </Button>
+      <Table
+        dataSource={orders}
+        columns={columns}
+        rowKey="orderID"
+        pagination={false}
+        bordered
+      />
+      {inspectionModal}
     </div>
   );
 };
 
-// Styles for better visual appeal
-const styles = {
-  container: {
-    backgroundColor: '#fff',
-    borderRadius: '8px',
-    padding: '20px',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-    maxWidth: '600px',
-    margin: '20px auto',
-  },
-  itemDetails: {
-    backgroundColor: '#fafafa',
-    padding: '20px',
-    borderRadius: '8px',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-  },
-  header: {
-    textAlign: 'center',
-    marginBottom: '20px',
-  },
-  button: {
-    marginTop: '20px',
-    display: 'block',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-  },
-};
-
-export default IncomingInventory;
+export default InspectionOrdersList;

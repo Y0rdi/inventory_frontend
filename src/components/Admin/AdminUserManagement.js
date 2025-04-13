@@ -1,10 +1,10 @@
 // src/components/Admin/AdminUserManagement.js
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Input, Select, Typography, message, Form } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import '../../styles/UserManagement.css';
+import { Table, Button, Modal, Input, Select, Typography, message, Form, Spin } from 'antd';
+import { EditOutlined, DeleteOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchUsers, addUser, updateUser, deleteUser } from '../../redux/slices/userSlice';
+import { fetchUsers, addUser, updateSystemAdmin, deleteUser } from '../../redux/slices/userSlice';
+import '../../styles/UserManagement.css';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -15,68 +15,75 @@ const AdminUserManagement = () => {
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentUser, setCurrentUser] = useState({ id: null, name: '', email: '', phone: '', address: '', role: '' });
+  const [form] = Form.useForm(); // Use Ant Design's form instance
 
-  // Fetch users on component mount
   useEffect(() => {
     if (status === 'idle') {
       dispatch(fetchUsers());
     }
-  }, [dispatch, status]);
+    console.log("Redux Users:", users); // Log the users from Redux
+  }, [dispatch, status, users]); // Ensure 'users' is in the dependency array
 
-  // Handle add/edit user form submission
+  // Open modal and reset form
+  const openModal = (user = null) => {
+    setIsEditing(!!user);
+    setIsModalVisible(true);
+    form.setFieldsValue(user || { name: '', email: '', phone: '', address: '', role: '', status: '', userID: '' });
+  };
+
+  // Submit handler
   const handleSubmit = async () => {
     try {
+      const values = await form.validateFields();
+      console.log("Submitting user data:", values); // Check if all necessary data is being passed
+  
       if (isEditing) {
-        await dispatch(updateUser(currentUser)).unwrap();
+        const updatedUser = { ...values, userID: values.userID };  // Ensure userID is correctly added
+        await dispatch(updateSystemAdmin(updatedUser)).unwrap();
         message.success('User updated successfully');
       } else {
-        await dispatch(addUser(currentUser)).unwrap();
+        await dispatch(addUser(values)).unwrap();
         message.success('User added successfully');
       }
-      resetForm();
+      setIsModalVisible(false);
     } catch (err) {
-      console.error('Error during submit:', err); 
-      message.error('Failed to save user');
+      console.error('Error submitting user:', err);  // Log error to console for more detail
+      message.error(err.response?.data?.message || 'Failed to save user');
     }
   };
+  
 
-  const resetForm = () => {
-    setCurrentUser({ id: null, name: '', email: '', phone: '', address: '', role: '' });
-    setIsModalVisible(false);
-    setIsEditing(false);
-  };
-
-  // Function to handle edit button click for a specific user
-  const handleEditClick = (user) => {
-    setCurrentUser(user);
-    setIsEditing(true);
-    setIsModalVisible(true);
-  };
-
-  // Function to handle remove button click for a specific user
-  const handleRemoveClick = async (userId) => {
+  // Delete user
+  const handleRemoveClick = async (userID) => {
     try {
-      await dispatch(deleteUser(Number(userId))).unwrap();
-      message.info('User removed successfully');
+      await dispatch(deleteUser(userID)).unwrap();
+      message.success('User removed successfully');
+      console.log("user id", userID);
     } catch (err) {
       message.error('Failed to remove user');
     }
   };
 
+  // Refresh users
+  const handleRefresh = () => {
+    dispatch(fetchUsers());
+  };
+
+  // Table columns
   const columns = [
     { title: 'Name', dataIndex: 'name', key: 'name' },
     { title: 'Email', dataIndex: 'email', key: 'email' },
     { title: 'Phone', dataIndex: 'phone', key: 'phone' },
     { title: 'Address', dataIndex: 'address', key: 'address' },
     { title: 'Role', dataIndex: 'role', key: 'role' },
+    { title: 'Status', dataIndex: 'status', key: 'status' },
     {
       title: 'Actions',
       key: 'actions',
-      render: (text, record) => (
+      render: (_, record) => (
         <>
-          <Button icon={<EditOutlined />} onClick={() => handleEditClick(record)} style={{ marginRight: 8 }}>Edit</Button>
-          <Button icon={<DeleteOutlined />} onClick={() => handleRemoveClick(record.id)} danger>Remove</Button>
+          <Button icon={<EditOutlined />} onClick={() => openModal(record)} style={{ marginRight: 8 }}>Edit</Button>
+          <Button icon={<DeleteOutlined />} onClick={() => handleRemoveClick(record.userID)} danger>Remove</Button>
         </>
       ),
     },
@@ -86,82 +93,67 @@ const AdminUserManagement = () => {
     <div className="user-management-container">
       <Title level={2} style={{ color: '#4caf50' }}>User Management</Title>
 
-      <Button
-        type="primary"
-        icon={<PlusOutlined />}
-        onClick={() => {
-          resetForm();
-          setIsModalVisible(true);
-        }}
-        style={{ marginBottom: 16 }}
-      >
+      <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()} style={{ marginBottom: 16 }}>
         Add User
       </Button>
 
+      <Button type="default" icon={<ReloadOutlined />} onClick={handleRefresh} style={{ marginBottom: 16, marginLeft: 8 }}>
+        Refresh
+      </Button>
+
       {status === 'loading' ? (
-        <p>Loading...</p>
+        <Spin size="large" />
       ) : status === 'failed' ? (
-        <p>Error: {error}</p>
+        <p style={{ color: 'red' }}>Error: {error}</p>
       ) : (
         <Table
           dataSource={users}
           columns={columns}
-          rowKey="id"
-          pagination={false}
+          rowKey="userID"  // Ensure this matches your API field (userID)
+          pagination={{ pageSize: 10 }}
           className="user-table"
         />
       )}
 
+      {/* Modal for Adding/Editing User */}
       <Modal
         title={isEditing ? 'Edit User' : 'Add New User'}
         visible={isModalVisible}
         onOk={handleSubmit}
-        onCancel={resetForm}
+        onCancel={() => setIsModalVisible(false)}
         okText={isEditing ? 'Update User' : 'Add User'}
         cancelText="Cancel"
       >
-        <Form layout="vertical">
-          <Form.Item label="Name" required>
-            <Input
-              value={currentUser.name}
-              onChange={(e) => setCurrentUser({ ...currentUser, name: e.target.value })}
-              placeholder="Enter name"
-            />
+        <Form form={form} layout="vertical">
+          <Form.Item name="userID" hidden>
+            <Input />
           </Form.Item>
-          <Form.Item label="Email" required>
-            <Input
-              type="email"
-              value={currentUser.email}
-              onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
-              placeholder="Enter email"
-            />
+          <Form.Item label="Name" name="name" rules={[{ required: true, message: 'Please enter name' }]}>
+            <Input placeholder="Enter name" />
           </Form.Item>
-          <Form.Item label="Phone" required>
-            <Input
-              value={currentUser.phone}
-              onChange={(e) => setCurrentUser({ ...currentUser, phone: e.target.value })}
-              placeholder="Enter phone"
-            />
+          <Form.Item label="Email" name="email" rules={[{ required: true, message: 'Please enter email' }]}>
+            <Input type="email" placeholder="Enter email" />
           </Form.Item>
-          <Form.Item label="Address" required>
-            <Input
-              value={currentUser.address}
-              onChange={(e) => setCurrentUser({ ...currentUser, address: e.target.value })}
-              placeholder="Enter address"
-            />
+          <Form.Item label="Phone" name="phone" rules={[{ required: true, message: 'Please enter phone number' }]}>
+            <Input placeholder="Enter phone" />
           </Form.Item>
-          <Form.Item label="Role" required>
-            <Select
-              value={currentUser.role}
-              onChange={(value) => setCurrentUser({ ...currentUser, role: value })}
-              placeholder="Select role"
-            >
+          <Form.Item label="Address" name="address" rules={[{ required: true, message: 'Please enter address' }]}>
+            <Input placeholder="Enter address" />
+          </Form.Item>
+          <Form.Item label="Role" name="role" rules={[{ required: true, message: 'Please select role' }]}>
+            <Select placeholder="Select role">
               <Option value="Procurement Officer">Procurement Officer</Option>
               <Option value="Inventory Manager">Inventory Manager</Option>
               <Option value="Supplier">Supplier</Option>
               <Option value="Warehouse Staff">Warehouse Staff</Option>
               <Option value="Quality Inspection Officer">Quality Inspection Officer</Option>
-              <Option value="Finance Officer">Finance Officer</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item label="Status" name="status" rules={[{ required: true, message: 'Please select status' }]}>
+            <Select placeholder="Select status">
+              <Option value="Active">Active</Option>
+              <Option value="Inactive">Inactive</Option>
+              <Option value="Suspended">Suspended</Option>
             </Select>
           </Form.Item>
         </Form>

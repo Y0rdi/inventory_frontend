@@ -1,146 +1,157 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
-// Fetch requested items
-export const fetchRequestedItems = createAsyncThunk(
-  'requestedItems/fetchRequestedItems',
-  async () => {
-    const token = localStorage.getItem('token'); // Get token from local storage
+// Helper function to get the token from localStorage
+const getAuthToken = () => {
+  return localStorage.getItem("token");
+};
 
-    if (!token) {
-      throw new Error('No token found');
-    }
-
+// Async thunk to fetch all requested items
+export const getAllRequestedItems = createAsyncThunk(
+  "requestedItems/getAll",
+  async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.put('http://localhost:4000/api/requests', {
+      const token = getAuthToken(); // Fetch token from localStorage
+      const config = {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      });
-      return response.data; // Assuming the data is an array of requested items
+      };
+
+      const response = await axios.get("http://localhost:4000/api/requests", config);
+      return response.data.purchaseRequests; // Return the list of requested items
     } catch (error) {
-      throw new Error(error.response ? error.response.data : error.message);
+      return rejectWithValue(
+        error.response?.data?.message || "Error fetching requested items"
+      );
     }
   }
 );
 
-// Approve a purchase request
+// Async thunk to approve a request
 export const approveRequest = createAsyncThunk(
-  'requestedItems/approveRequest',
-  async (requestId) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      throw new Error('No token found');
-    }
-
+  "requestedItems/approve",
+  async ({ requestID, supplierID, note,itemDetails,quantity }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `http://localhost:4000/api/requests/${requestId}/approve`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      return response.data; // The response should contain the updated request status
-    } catch (error) {
-      throw new Error(error.response ? error.response.data : error.message);
-    }
-  }
-);
+      const token = getAuthToken(); // Fetch token from localStorage
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
 
-// Decline a purchase request
-export const declineRequest = createAsyncThunk(
-  'requestedItems/declineRequest',
-  async (requestId) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      throw new Error('No token found');
-    }
-
-    try {
       const response = await axios.put(
-        `http://localhost:4000/api/requests/${requestId}/decline`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        "http://localhost:4000/api/approve",
+        { requestID, supplierID, note,itemDetails,quantity },
+        config // Include the headers in the request
       );
-      return response.data; // The response should contain the updated request status
+
+      return { requestID, message: response.data.message };
     } catch (error) {
-      throw new Error(error.response ? error.response.data : error.message);
+      return rejectWithValue(
+        error.response?.data?.message || "Error approving request"
+      );
     }
   }
 );
 
-const initialState = {
-  items: [],
-  selectedItem: null,
-  actionType: null,
-  supplier: '',
-  supplierDetails: '',
-  loading: false,
-  error: null,
-};
+// Async thunk to decline a request
+export const declineRequest = createAsyncThunk(
+  "requestedItems/decline",
+  async (requestID, { rejectWithValue }) => {
+    try {
+      const token = getAuthToken(); // Fetch token from localStorage
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
 
+      const response = await axios.put(
+        "http://localhost:4000/api/decline",
+        { requestID },
+        config // Include the headers in the request
+      );
+
+      return { requestID, message: response.data.message }; // Return success message and requestID
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Error declining request"
+      );
+    }
+  }
+);
+
+// Slice definition
 const requestedItemsSlice = createSlice({
-  name: 'requestedItems',
-  initialState,
+  name: "requestedItems",
+  initialState: {
+    loading: false,
+    requestedItems: [],
+    successMessage: null,
+    errorMessage: null,
+  },
   reducers: {
-    setSelectedItem: (state, action) => {
-      state.selectedItem = action.payload;
-    },
-    setActionType: (state, action) => {
-      state.actionType = action.payload;
-    },
-    setSupplier: (state, action) => {
-      state.supplier = action.payload;
-    },
-    setSupplierDetails: (state, action) => {
-      state.supplierDetails = action.payload;
-    },
-    resetModal: (state) => {
-      state.selectedItem = null;
-      state.actionType = null;
-      state.supplier = '';
-      state.supplierDetails = '';
+    resetMessages(state) {
+      state.successMessage = null;
+      state.errorMessage = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchRequestedItems.pending, (state) => {
+      // Fetch all requested items
+      .addCase(getAllRequestedItems.pending, (state) => {
         state.loading = true;
+        state.successMessage = null;
+        state.errorMessage = null;
       })
-      .addCase(fetchRequestedItems.fulfilled, (state, action) => {
+      .addCase(getAllRequestedItems.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.requestedItems = action.payload; // Store the fetched requested items
+        state.errorMessage = null;
       })
-      .addCase(fetchRequestedItems.rejected, (state, action) => {
+      .addCase(getAllRequestedItems.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.requestedItems = [];
+        state.errorMessage = action.payload; // Error message
+      })
+      // Approve request
+      .addCase(approveRequest.pending, (state) => {
+        state.loading = true;
+        state.successMessage = null;
+        state.errorMessage = null;
       })
       .addCase(approveRequest.fulfilled, (state, action) => {
-        state.items = state.items.map((item) =>
-          item.id === action.payload.id ? action.payload : item
-        );
+        state.loading = false;
+        state.successMessage = action.payload.message;
+        state.requestedItems = state.requestedItems.filter(
+          (item) => item.id !== action.payload.requestID
+        ); // Remove approved request
+      })
+      .addCase(approveRequest.rejected, (state, action) => {
+        state.loading = false;
+        state.errorMessage = action.payload;
+      })
+      // Decline request
+      .addCase(declineRequest.pending, (state) => {
+        state.loading = true;
+        state.successMessage = null;
+        state.errorMessage = null;
       })
       .addCase(declineRequest.fulfilled, (state, action) => {
-        state.items = state.items.map((item) =>
-          item.id === action.payload.id ? action.payload : item
-        );
+        state.loading = false;
+        state.successMessage = action.payload.message;
+        state.requestedItems = state.requestedItems.filter(
+          (item) => item.id !== action.payload.requestID
+        ); // Remove declined request
+      })
+      .addCase(declineRequest.rejected, (state, action) => {
+        state.loading = false;
+        state.errorMessage = action.payload;
       });
   },
 });
 
-export const {
-  setSelectedItem,
-  setActionType,
-  setSupplier,
-  setSupplierDetails,
-  resetModal,
-} = requestedItemsSlice.actions;
+export const { resetMessages } = requestedItemsSlice.actions;
 
 export default requestedItemsSlice.reducer;

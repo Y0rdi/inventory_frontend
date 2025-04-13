@@ -1,125 +1,89 @@
-import React, { useState } from 'react';
-import { Table, Button, Modal, message } from 'antd';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchOrders } from '../../redux/slices/internalWarehouseSlice'; // Updated import for your slice
+import { Table, Spin, Alert } from 'antd'; // Import Ant Design components
 
-const InternalTransferPage = () => {
-  // Sample internal transfer requests data
-  const [requests, setRequests] = useState([
-    {
-      key: '1',
-      itemName: 'Laptop',
-      department: 'IT',
-      quantity: 5,
-      approvedBy: 'Inventory Manager',
-      status: 'Approved',
-    },
-    {
-      key: '2',
-      itemName: 'Desk Chair',
-      department: 'HR',
-      quantity: 2,
-      approvedBy: 'Inventory Manager',
-      status: 'Pending',
-    },
-    {
-      key: '3',
-      itemName: 'Printer',
-      department: 'Admin',
-      quantity: 1,
-      approvedBy: 'Inventory Manager',
-      status: 'Approved',
-    },
-  ]);
+const OrdersComponent = () => {
+  const dispatch = useDispatch();
 
-  const handleMarkProcessed = (request) => {
-    // Check if the request has been approved
-    if (request.status === 'Approved') {
-      // Update status to "Processed"
-      const updatedRequests = requests.map((req) =>
-        req.key === request.key ? { ...req, status: 'Processed' } : req
-      );
-      setRequests(updatedRequests);
-      message.success('Request marked as processed.');
-    } else {
-      message.error('Request must be approved before processing.');
-    }
-  };
+  // Access orders from the Redux store
+  const { orders, loading, error } = useSelector((state) => state.internalWarehouse); // Update selector to match the new slice
 
+  // Fetch orders on component mount
+  useEffect(() => {
+    dispatch(fetchOrders());
+  }, [dispatch]);
+
+  // Define table columns
   const columns = [
     {
       title: 'Item Name',
-      dataIndex: 'itemName',
-      key: 'itemName',
-    },
-    {
-      title: 'Department',
-      dataIndex: 'department',
-      key: 'department',
-    },
-    {
-      title: 'Quantity',
-      dataIndex: 'quantity',
-      key: 'quantity',
-    },
-    {
-      title: 'Approved By',
-      dataIndex: 'approvedBy',
-      key: 'approvedBy',
+      dataIndex: 'reqitem',
+      key: 'reqitem',
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status) => (
-        <span style={{ color: status === 'Processed' ? 'green' : status === 'Approved' ? 'blue' : 'red' }}>
-          {status}
-        </span>
-      ),
+    },
+    {
+      title: 'Requested By',
+      dataIndex: 'requestedBy',
+      key: 'requestedBy',
+      render: () => 'Beza', // Set the value to "Beza" for every row
     },
     {
       title: 'Action',
       key: 'action',
       render: (_, record) => (
-        <Button
-          type="primary"
-          onClick={() => handleMarkProcessed(record)}
-          disabled={record.status === 'Processed'}
-        >
-          Mark as Processed
-        </Button>
+        <span>
+          {/* Add any action buttons or links here */}
+          <a href={`#order-${record.id}`} style={{ marginRight: 8 }}>
+            Mark as processed
+          </a>
+          {/* You can add more actions as needed */}
+        </span>
       ),
     },
   ];
 
+  // Render component
   return (
-    <div style={styles.container}>
-      <h2 style={styles.header}>Internal Transfer Requests</h2>
-      <Table
-        columns={columns}
-        dataSource={requests}
-        pagination={false}
-        style={styles.table}
-      />
+    <div>
+      <h1>Orders to be Delivered</h1>
+      {loading && (
+        <div style={{ textAlign: 'center' }}>
+          <Spin size="large" />
+        </div>
+      )}
+      {error && (
+        <Alert
+          message="Error"
+          description={error}
+          type="error"
+          showIcon
+          style={{ marginBottom: 20 }}
+        />
+      )}
+      {!loading && !error && orders.length === 0 && (
+        <Alert
+          message="No Orders"
+          description="There are currently no orders to be delivered."
+          type="info"
+          showIcon
+          style={{ marginBottom: 20 }}
+        />
+      )}
+      {!loading && !error && orders.length > 0 && (
+        <Table
+          dataSource={orders}
+          columns={columns}
+          rowKey="id"
+          pagination={{ pageSize: 10 }} // Optional pagination
+        />
+      )}
     </div>
   );
 };
 
-
-const styles = {
-  container: {
-    backgroundColor: '#fff',
-    borderRadius: '8px',
-    padding: '20px',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-    maxWidth: '800px',
-    margin: '60px auto',
-  },
-  header: {
-    textAlign: 'center',
-    marginBottom: '20px',
-  },
-  table: {
-    marginTop: '20px',
-  },
-};
-
-export default InternalTransferPage;
+export default OrdersComponent;

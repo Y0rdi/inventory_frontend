@@ -1,160 +1,182 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
-const BASE_URL = 'http://localhost:4000';
+const BASE_URL = "http://localhost:4000";
 
 // Utility function to get token from local storage
 const getToken = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   if (!token) {
-    throw new Error('No token found in local storage');
+    throw new Error("No token found in local storage");
   }
   return token;
 };
 
 // Fetch all users
-export const fetchUsers = createAsyncThunk('users/fetchUsers', async () => {
-  const token = getToken(); // Get token from local storage
-
+export const fetchUsers = createAsyncThunk("users/fetchUsers", async (_, { rejectWithValue }) => {
   try {
-    const response = await axios.get(`${BASE_URL}/admin`, {
-      headers: {
-        Authorization: `Bearer ${token}`, // Use token from local storage
-      },
+    const token = getToken();
+    const response = await axios.get(`${BASE_URL}/admin/users`, {
+      headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching users:', error);
-    throw error;
+    console.error("Error fetching users:", error);
+    return rejectWithValue(error.response?.data || "Failed to fetch users");
   }
 });
 
 // Add new user
-export const addUser = createAsyncThunk('users/addUser', async (newUser) => {
-  const token = getToken(); // Get token from local storage
-
+export const addUser = createAsyncThunk("users/addUser", async (newUser, { rejectWithValue }) => {
   try {
+    const token = getToken();
     const response = await axios.post(`${BASE_URL}/admin/create`, newUser, {
-      headers: {
-        Authorization: `Bearer ${token}`, // Add the token in Authorization header
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
-    console.log('Add User Response:', response.data); // Log to verify
     return response.data;
   } catch (error) {
-    console.error('Error adding user:', error);
-    throw error;
+    console.error("Error adding user:", error);
+    return rejectWithValue(error.response?.data || "Failed to add user");
   }
 });
 
-// Update user
-export const updateUser = createAsyncThunk('users/updateUser', async (updatedUser) => {
-  const token = getToken(); // Get token from local storage
+// Update system admin
+export const updateSystemAdmin = createAsyncThunk(
+  "users/updateSystemAdmin",
+  async (updatedUser, { rejectWithValue }) => {
+    try {
+      const token = getToken();
+      const userId = updatedUser.userID; // Extract userID from updatedUser
 
-  console.log('Updating User:', updatedUser); // Debug log
-
-  try {
-    const response = await axios.put(
-      `${BASE_URL}/admin/30`, // Adjust to correct ID dynamically
-      updatedUser,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      if (!userId) {
+        return rejectWithValue("User ID is missing");
       }
-    );
-    console.log('Update User Response:', response.data); // Debug log
-    return response.data;
-  } catch (error) {
-    console.error('Error updating user:', error.response ? error.response.data : error.message);
-    throw error;
+
+      const response = await axios.put(
+        `${BASE_URL}/admin/${userId}`,
+        updatedUser, // Pass the updatedUser data to the backend
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Error updating user:", error);
+      return rejectWithValue(error.response?.data || "Failed to update user");
+    }
   }
-});
+);
 
 // Delete user
-export const deleteUser = createAsyncThunk('users/deleteUser', async (id) => {
-  const token = getToken(); // Get token from local storage
-
+export const deleteUser = createAsyncThunk("users/deleteUser", async (userID, { rejectWithValue }) => {
   try {
-    await axios.delete(`${BASE_URL}/admin/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const token = getToken();
+    await axios.delete(`${BASE_URL}/admin/${userID}`, {
+      headers: { Authorization: `Bearer ${token}` },
     });
-    return id; // Return the ID to remove it from the Redux state
+    return userID; // Return userID to filter it from the users list
   } catch (error) {
-    console.error('Error deleting user:', error);
-    throw error;
+    console.error("Error deleting user:", error);
+    return rejectWithValue(error.response?.data || "Failed to delete user");
   }
 });
-export const Account = createAsyncThunk('users/fetchUserData', async (userID) => {
-  const token = localStorage.getItem('authToken'); // Get token from local storage
 
-  if (!token) {
-    throw new Error('No token found in local storage');
-  }
-
+// Fetch single user data
+export const fetchUserById = createAsyncThunk("users/fetchUserById", async (userID, { rejectWithValue }) => {
   try {
+    const token = getToken();
     const response = await axios.get(`${BASE_URL}/admin/${userID}`, {
-      headers: {
-        Authorization: `Bearer ${token}`, // Use token from local storage
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching user data:', error);
-    throw error;
+    console.error("Error fetching user data:", error);
+    return rejectWithValue(error.response?.data || "Failed to fetch user data");
+  }
+});
+// Fetch total user count for dashboard stats
+export const fetchTotalUsers = createAsyncThunk("users/fetchTotalUsers", async (_, { rejectWithValue }) => {
+  try {
+    const token = getToken();
+    const response = await axios.get(`${BASE_URL}/admin/stats`, {  // Replace with the correct endpoint
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data.totalUsers;  // Assuming the response contains the totalUsers field
+  } catch (error) {
+    console.error("Error fetching total users:", error);
+    return rejectWithValue(error.response?.data || "Failed to fetch total users");
   }
 });
 
 
+// Redux Slice
 const usersSlice = createSlice({
-  name: 'users',
+  name: "users",
   initialState: {
     users: [],
-    selectedUser: null, // To store the data of the selected user
-    status: 'idle',
+    selectedUser: null, // Stores currently selected user
+    status: "idle",
+    loading: false,
     error: null,
   },
-  reducers: {},
-  extraReducers(builder) {
+  reducers: {
+    setSelectedUser: (state, action) => {
+      state.selectedUser = action.payload;
+    },
+  },
+  extraReducers: (builder) => {
     builder
+      // Fetch all users
       .addCase(fetchUsers.pending, (state) => {
-        state.status = 'loading';
+        state.status = "loading";
+        state.loading = true;
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        state.users = action.payload;
+        state.status = "succeeded";
+        state.loading = false;
+        state.users = action.payload.map(user => ({
+          ...user,
+          id: user.userID,  // Rename userID to id if needed in Redux state
+        }));
       })
       .addCase(fetchUsers.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.error.message;
+        state.status = "failed";
+        state.loading = false;
+        state.error = action.payload;
       })
+
+      // Add user
       .addCase(addUser.fulfilled, (state, action) => {
         state.users.push(action.payload);
       })
-      .addCase(updateUser.fulfilled, (state, action) => {
+
+      // Update system admin
+      .addCase(updateSystemAdmin.fulfilled, (state, action) => {
         const updatedUser = action.payload;
-        const index = state.users.findIndex(user => user.id === updatedUser.id);
+        const index = state.users.findIndex(user => user.userID === updatedUser.userID); // Use userID for comparison
         if (index !== -1) {
           state.users[index] = updatedUser;
         }
       })
+
+      // Delete user
       .addCase(deleteUser.fulfilled, (state, action) => {
-        state.users = state.users.filter((user) => user.id !== action.payload);
+        state.users = state.users.filter(user => user.userID !== action.payload); // Use userID for filtering
       })
-      .addCase(Account.pending, (state) => {
-        state.status = 'loading';
+
+      // Fetch single user
+      .addCase(fetchUserById.pending, (state) => {
+        state.loading = true;
       })
-      .addCase(Account.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        state.selectedUser = action.payload; // Store the selected user's data
+      .addCase(fetchUserById.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedUser = action.payload;
       })
-      .addCase(Account.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.error.message;
+      .addCase(fetchUserById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
 
+export const { setSelectedUser } = usersSlice.actions;
 export default usersSlice.reducer;

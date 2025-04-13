@@ -10,9 +10,9 @@ export const loginUser = createAsyncThunk(
   async ({ username, password }, { rejectWithValue }) => {
     try {
       const response = await axios.post(`${BASE_URL}/login`, { username, password });
+      console.log('API Response:', response.data); 
       const { token, user } = response.data;
 
-      // Store token in local storage
       localStorage.setItem('token', token);
 
       // Check if the username and password are the same (as per your requirements)
@@ -68,6 +68,17 @@ const authSlice = createSlice({
       });
   }
 });
+
+// Selector to get username and email
+export const selectUserDetails = (state) => {
+  if (state.auth.user) {
+    return {
+      name: state.auth.user.name,
+      email: state.auth.user.email,
+    };
+  }
+  return null;
+};
 
 export const { setUser, logoutUser, setNeedsPasswordUpdate } = authSlice.actions;
 

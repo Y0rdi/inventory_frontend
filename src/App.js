@@ -5,21 +5,25 @@ import ProcurementOfficer from './components/procurementOfficer/ProcurementOffic
 import QualityInspectorLayout from './components/QualityControlInspector/QualityControlInspectorLayout';
 import WarehouseLayout from './components/warehouse/WarehouseLayout';
 import InventoryManagerLayout from './components/InventoryManager/InventoryManagerLayout';
+import DepartmentUserLayout from './components/departmentuser/DepartmentUserLayout';
+import SupplierLayout from './components/Supplier/SupplierLayout'; // Import SupplierLayout
 import Login from './components/login';
 import UpdatePasswordPage from './components/UpdatePasswordPage';
+
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login/>} />
-        <Route path="/update-password" element={<UpdatePasswordPage/>} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/update-password" element={<UpdatePasswordPage />} />
         {/* Public Routes */}
         <Route path="/admin/*" element={<Admin />} />
         <Route path="/procurement-officer/*" element={<ProcurementOfficer />} />
         <Route path="/quality-inspector/*" element={<QualityInspectorLayout />} />
         <Route path="/warehouse/*" element={<WarehouseLayout />} />
         <Route path="/inventory-manager/*" element={<InventoryManagerLayout />} />
-
+        <Route path="/department-user/*" element={<DepartmentUserLayout />} />
+        <Route path="/supplier/*" element={<SupplierLayout />} /> {/* Add Supplier Route */}
         {/* Default route */}
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>

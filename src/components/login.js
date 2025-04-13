@@ -10,6 +10,7 @@ const Login = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const dispatch = useDispatch();
   const navigate = useNavigate(); // Used for navigation
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMessage(''); // Clear previous error message
@@ -18,33 +19,51 @@ const Login = () => {
       // Dispatch the login action and await the response
       const action = await dispatch(loginUser({ username, password }));
   
+      // Check if login was successful
       if (action.type === 'auth/loginUser/fulfilled') {
-        const { user, token } = action.payload;
+        const { user, token, needsPasswordUpdate } = action.payload;
   
-        // Dispatch setUser to update Redux state with user data and token
-        dispatch(setUser({ user, token }));
+        // If username and password are the same, redirect to update-password page
+        if (username === password && needsPasswordUpdate) {
+          navigate('/update-password');
+          return;
+        }
   
-        // Redirect based on the role if the password has been updated
+        // Redirect based on the user's role
         switch (user.role) {
           case 'Admin':
             navigate('/admin');
             break;
-          case 'Procurement Officer':
+          case 'procurement officer':
             navigate('/procurement-officer');
             break;
-          case 'quality-inspector':
+          case 'quality inspector':
             navigate('/quality-inspector');
             break;
           case 'warehouse':
             navigate('/warehouse');
             break;
+          case 'department':
+            navigate('/department-user');
+            break;
           case 'Inventory Manager':
             navigate('/inventory-manager');
             break;
+            case 'supplier':
+            navigate('/supplier');
+            break;
+            case 'Warehouse Staff':
+              navigate('/warehouse');
+              break;
+            case 'Quality Inspector':
+            navigate('/quality-inspector/');
+            break;
           default:
+            // Navigate to a default dashboard if no role matches
             navigate('/dashboard');
         }
-      } else if (action.type === 'auth/loginUser/rejected') { // Corrected 'else if' condition
+      } else if (action.type === 'auth/loginUser/rejected') {
+        // Handle login rejection
         setErrorMessage(action.payload || 'Login failed. Please try again.');
       }
     } catch (error) {

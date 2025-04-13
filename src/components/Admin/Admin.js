@@ -13,7 +13,7 @@ const Admin = () => {
       <Routes>
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="user-management" element={<AdminUserManagement />} />
-        <Route path="inventory-settings" element={<AdminInventorySettings />} />
+        <Route path="supplier-management" element={<AdminInventorySettings />} />
       </Routes>
     </AdminLayout>
   );

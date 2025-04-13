@@ -1,0 +1,61 @@
+.pending-requests-container {
+    margin: 20px;
+    padding: 10px;
+  }
+  
+  h2 {
+    margin-bottom: 20px;
+  }
+  
+  .requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .request-card {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .request-card:hover {
+    background-color: #f1f1f1;
+  }
+  
+  .request-card.expanded {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background-color: #e8f4f8; /* Lighter background for expanded view */
+  }
+  
+  .request-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .request-id,
+  .request-item,
+  .request-quantity,
+  .request-status {
+    font-size: 14px;
+    color: #333;
+  }
+  
+  .request-details {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #ccc;
+    font-size: 13px;
+    color: #555;
+    transition: max-height 0.3s ease-in-out;
+  }
+  
+  .request-details p {
+    margin: 0;
+  }
+  
